@@ -93,19 +93,26 @@ class DocTool(Tool):
                 
             elif element.name == 'h1':
                 heading = doc.add_heading(element.get_text(), level=1)
+                for run in heading.runs:
+                    run.font.name = '黑体'
+                    run.font.size = Pt(16)  # 三号字体约为 16pt
+                    if run.text.isdigit():
+                        run.font.name = 'Times New Roman'
                 
             elif element.name == 'h2':
                 heading = doc.add_heading(element.get_text(), level=2)
+                for run in heading.runs:
+                    run.font.name = '黑体'
+                    run.font.size = Pt(14)  # 四号字体约为 14pt
+                    if run.text.isdigit():
+                        run.font.name = 'Times New Roman'
                 
             elif element.name == 'h3':
                 heading = doc.add_heading(element.get_text(), level=3)
-                
             elif element.name == 'h4':
                 heading = doc.add_heading(element.get_text(), level=4)
-                
             elif element.name == 'h5':
                 heading = doc.add_heading(element.get_text(), level=5)
-                
             elif element.name == 'h6':
                 heading = doc.add_heading(element.get_text(), level=6)
                 
@@ -145,28 +152,56 @@ class DocTool(Tool):
         for child in element.children:
             if child.name is None:  # Text node
                 run = paragraph.add_run(child.string)
+                run.font.name = '仿宋'
+                run.font.size = Pt(12)  # 小四字体约为 12pt
+                if run.text.isdigit():
+                    run.font.name = 'Times New Roman'
             elif child.name == 'strong' or child.name == 'b':
                 run = paragraph.add_run(child.get_text())
                 run.bold = True
+                run.font.name = '仿宋'
+                run.font.size = Pt(12)
+                if run.text.isdigit():
+                    run.font.name = 'Times New Roman'
             elif child.name == 'em' or child.name == 'i':
                 run = paragraph.add_run(child.get_text())
                 run.italic = True
+                run.font.name = '仿宋'
+                run.font.size = Pt(12)
+                if run.text.isdigit():
+                    run.font.name = 'Times New Roman'
             elif child.name == 'code':
                 run = paragraph.add_run(child.get_text())
                 run.font.name = 'Courier New'
             elif child.string:
                 run = paragraph.add_run(child.string)
+                run.font.name = '仿宋'
+                run.font.size = Pt(12)
+                if run.text.isdigit():
+                    run.font.name = 'Times New Roman'
             elif hasattr(child, 'children'):
                 # Recursively process nested elements
                 for nested_child in child.children:
                     if nested_child.name is None:  # Text node
                         run = paragraph.add_run(nested_child.string)
+                        run.font.name = '仿宋'
+                        run.font.size = Pt(12)
+                        if run.text.isdigit():
+                            run.font.name = 'Times New Roman'
                     elif nested_child.name == 'strong' or nested_child.name == 'b':
                         run = paragraph.add_run(nested_child.get_text())
                         run.bold = True
+                        run.font.name = '仿宋'
+                        run.font.size = Pt(12)
+                        if run.text.isdigit():
+                            run.font.name = 'Times New Roman'
                     elif nested_child.name == 'em' or nested_child.name == 'i':
                         run = paragraph.add_run(nested_child.get_text())
                         run.italic = True
+                        run.font.name = '仿宋'
+                        run.font.size = Pt(12)
+                        if run.text.isdigit():
+                            run.font.name = 'Times New Roman'
     
     def _add_list(self, doc, list_element, is_numbered=False):
         # Process a list (ul or ol)
