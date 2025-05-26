@@ -2,7 +2,7 @@
 
 **Author:** [Steven Lynn](https://github.com/stvlynn)
 
-**Version:** 0.0.1
+**Version:** 0.0.2
 
 **Type:** tool
 
