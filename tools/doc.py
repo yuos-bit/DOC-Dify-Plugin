@@ -11,6 +11,9 @@ from docx.oxml.ns import qn
 from typing import Any, List, Dict, Tuple
 import html
 from bs4 import BeautifulSoup
+import requests
+from PIL import Image
+from io import BytesIO
 
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
@@ -62,7 +65,7 @@ class DocTool(Tool):
         # 设置文档默认字体
         doc.styles['Normal'].font.name = '仿宋GB_2312'
         doc.styles['Normal']._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
-        doc.styles['Normal'].font.size = Pt(16)  # 三号字
+        doc.styles['Normal'].font.size = Pt(14)  # 四号字
 
         # 定义标题样式
         heading_styles = {
@@ -128,7 +131,9 @@ class DocTool(Tool):
                 'markdown.extensions.fenced_code',
                 'markdown.extensions.codehilite',
                 'markdown.extensions.nl2br',
-                'markdown.extensions.sane_lists'
+                'markdown.extensions.sane_lists',
+                'markdown.extensions.attr_list',
+                'markdown.extensions.md_in_html'
             ]
         )
 
@@ -146,44 +151,13 @@ class DocTool(Tool):
             if element.name is None:
                 continue
 
-            elif element.name == 'h1':
-                heading = doc.add_heading(element.get_text(), level=1)
-                heading.style = doc.styles['Heading1']
+            elif element.name.startswith('h'):
+                level = int(element.name[1:])
+                heading = doc.add_heading(element.get_text(), level=level)
+                if level <= 4:
+                    heading.style = doc.styles[f'Heading{level}']
                 for run in heading.runs:
-                    if run.text.isdigit():
-                        run.font.name = 'Times New Roman'
-
-            elif element.name == 'h2':
-                heading = doc.add_heading(element.get_text(), level=2)
-                heading.style = doc.styles['Heading2']
-                for run in heading.runs:
-                    if run.text.isdigit():
-                        run.font.name = 'Times New Roman'
-
-            elif element.name == 'h3':
-                heading = doc.add_heading(element.get_text(), level=3)
-                heading.style = doc.styles['Heading3']
-                for run in heading.runs:
-                    if run.text.isdigit():
-                        run.font.name = 'Times New Roman'
-
-            elif element.name == 'h4':
-                heading = doc.add_heading(element.get_text(), level=4)
-                heading.style = doc.styles['Heading4']
-                for run in heading.runs:
-                    if run.text.isdigit():
-                        run.font.name = 'Times New Roman'
-
-            elif element.name == 'h5':
-                heading = doc.add_heading(element.get_text(), level=5)
-                for run in heading.runs:
-                    if run.text.isdigit():
-                        run.font.name = 'Times New Roman'
-
-            elif element.name == 'h6':
-                heading = doc.add_heading(element.get_text(), level=6)
-                for run in heading.runs:
-                    if run.text.isdigit():
+                    if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
                         run.font.name = 'Times New Roman'
 
             elif element.name == 'p':
@@ -214,6 +188,10 @@ class DocTool(Tool):
             elif element.name == 'hr':
                 doc.add_paragraph('_' * 50)
 
+            elif element.name == 'img':
+                img_url = element.get('src')
+                self._add_image(doc, img_url)
+
             elif hasattr(element, 'children'):
                 # Recursively process child elements
                 self._process_html_elements(doc, element)
@@ -222,24 +200,29 @@ class DocTool(Tool):
         # Process the content of a paragraph with formatting
         for child in element.children:
             if child.name is None:  # Text node
-                run = paragraph.add_run(child.string)
-                run.font.name = '仿宋GB_2312'
-                run.font.size = Pt(16)  # 三号字
-                if run.text.isdigit():
-                    run.font.name = 'Times New Roman'
+                text = str(child.string) if child.string else ""
+                runs = text.split('\n')
+                for i, run_text in enumerate(runs):
+                    run = paragraph.add_run(run_text)
+                    run.font.name = '仿宋GB_2312'
+                    run.font.size = Pt(14)  # 四号字
+                    if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                        run.font.name = 'Times New Roman'
+                    if i < len(runs) - 1:
+                        paragraph.add_run('\n')
             elif child.name == 'strong' or child.name == 'b':
                 run = paragraph.add_run(child.get_text())
                 run.bold = True
                 run.font.name = '仿宋GB_2312'
-                run.font.size = Pt(16)
-                if run.text.isdigit():
+                run.font.size = Pt(14)
+                if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
                     run.font.name = 'Times New Roman'
             elif child.name == 'em' or child.name == 'i':
                 run = paragraph.add_run(child.get_text())
                 run.italic = True
                 run.font.name = '仿宋GB_2312'
-                run.font.size = Pt(16)
-                if run.text.isdigit():
+                run.font.size = Pt(14)
+                if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
                     run.font.name = 'Times New Roman'
             elif child.name == 'code':
                 run = paragraph.add_run(child.get_text())
@@ -247,31 +230,36 @@ class DocTool(Tool):
             elif child.string:
                 run = paragraph.add_run(child.string)
                 run.font.name = '仿宋GB_2312'
-                run.font.size = Pt(16)
-                if run.text.isdigit():
+                run.font.size = Pt(14)
+                if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
                     run.font.name = 'Times New Roman'
             elif hasattr(child, 'children'):
                 # Recursively process nested elements
                 for nested_child in child.children:
                     if nested_child.name is None:  # Text node
-                        run = paragraph.add_run(nested_child.string)
-                        run.font.name = '仿宋GB_2312'
-                        run.font.size = Pt(16)
-                        if run.text.isdigit():
-                            run.font.name = 'Times New Roman'
+                        text = str(nested_child.string) if nested_child.string else ""
+                        runs = text.split('\n')
+                        for i, run_text in enumerate(runs):
+                            run = paragraph.add_run(run_text)
+                            run.font.name = '仿宋GB_2312'
+                            run.font.size = Pt(14)
+                            if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                                run.font.name = 'Times New Roman'
+                            if i < len(runs) - 1:
+                                paragraph.add_run('\n')
                     elif nested_child.name == 'strong' or nested_child.name == 'b':
                         run = paragraph.add_run(nested_child.get_text())
                         run.bold = True
                         run.font.name = '仿宋GB_2312'
-                        run.font.size = Pt(16)
-                        if run.text.isdigit():
+                        run.font.size = Pt(14)
+                        if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
                             run.font.name = 'Times New Roman'
                     elif nested_child.name == 'em' or nested_child.name == 'i':
                         run = paragraph.add_run(nested_child.get_text())
                         run.italic = True
                         run.font.name = '仿宋GB_2312'
-                        run.font.size = Pt(16)
-                        if run.text.isdigit():
+                        run.font.size = Pt(14)
+                        if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
                             run.font.name = 'Times New Roman'
 
     def _add_list(self, doc, list_element, is_numbered=False):
@@ -302,6 +290,12 @@ class DocTool(Tool):
         p.paragraph_format.left_indent = Inches(0.5)
         p.paragraph_format.right_indent = Inches(0.5)
 
+        # Format code block for better display
+        lines = code.split('\n')
+        for line in lines:
+            p.add_run(line).font.name = 'Courier New'
+            p.add_run('\n')
+
     def _add_html_table(self, doc, table):
         # Get rows
         rows = table.find_all('tr')
@@ -328,3 +322,15 @@ class DocTool(Tool):
                         for paragraph in doc_table.cell(i, j).paragraphs:
                             for run in paragraph.runs:
                                 run.bold = True
+
+    def _add_image(self, doc, img_url):
+        try:
+            response = requests.get(img_url)
+            response.raise_for_status()
+            img = Image.open(BytesIO(response.content))
+            temp_img_path = 'temp_image.jpg'
+            img.save(temp_img_path)
+            doc.add_picture(temp_img_path)
+            os.remove(temp_img_path)
+        except Exception as e:
+            print(f"Error adding image: {e}")
