@@ -1,7 +1,5 @@
 dify_plugin~=0.0.1b67
 python-docx>=0.8.11
-markdown>=3.8.1
+markdown>=3.4.1
 PyYAML>=6.0
-beautifulsoup4>=4.12.3
-requests>=2.32.3
-Pillow>=11.2.1
+beautifulsoup4>=4.11.1
