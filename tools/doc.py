@@ -216,23 +216,35 @@ class DocTool(Tool):
                 runs = text.split('\n')
                 for i, run_text in enumerate(runs):
                     run = paragraph.add_run(run_text)
+                    run.font.name = '仿宋GB_2312'
                     run.font.size = Pt(14)  # 四号字
+                    if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                        run.font.name = 'Times New Roman'
                     if i < len(runs) - 1:
                         paragraph.add_run('\n')
             elif child.name == 'strong' or child.name == 'b':
                 run = paragraph.add_run(child.get_text())
                 run.bold = True
+                run.font.name = '仿宋GB_2312'
                 run.font.size = Pt(14)
+                if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                    run.font.name = 'Times New Roman'
             elif child.name == 'em' or child.name == 'i':
                 run = paragraph.add_run(child.get_text())
                 run.italic = True
+                run.font.name = '仿宋GB_2312'
                 run.font.size = Pt(14)
+                if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                    run.font.name = 'Times New Roman'
             elif child.name == 'code':
                 run = paragraph.add_run(child.get_text())
                 run.font.name = 'Courier New'
             elif child.string:
                 run = paragraph.add_run(child.string)
+                run.font.name = '仿宋GB_2312'
                 run.font.size = Pt(14)
+                if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                    run.font.name = 'Times New Roman'
             elif hasattr(child, 'children'):
                 # Recursively process nested elements
                 for nested_child in child.children:
@@ -241,17 +253,26 @@ class DocTool(Tool):
                         runs = text.split('\n')
                         for i, run_text in enumerate(runs):
                             run = paragraph.add_run(run_text)
+                            run.font.name = '仿宋GB_2312'
                             run.font.size = Pt(14)
+                            if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                                run.font.name = 'Times New Roman'
                             if i < len(runs) - 1:
                                 paragraph.add_run('\n')
                     elif nested_child.name == 'strong' or nested_child.name == 'b':
                         run = paragraph.add_run(nested_child.get_text())
                         run.bold = True
+                        run.font.name = '仿宋GB_2312'
                         run.font.size = Pt(14)
+                        if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                            run.font.name = 'Times New Roman'
                     elif nested_child.name == 'em' or nested_child.name == 'i':
                         run = paragraph.add_run(nested_child.get_text())
                         run.italic = True
+                        run.font.name = '仿宋GB_2312'
                         run.font.size = Pt(14)
+                        if run.text.isdigit() or re.match(r'[a-zA-Z]', run.text):
+                            run.font.name = 'Times New Roman'
 
     def _add_list(self, doc, list_element, is_numbered=False):
         # Process a list (ul or ol)
