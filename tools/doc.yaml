@@ -1,6 +1,6 @@
 identity:
   name: markdown_to_docx_converter
-  author: stvlynn
+  author: yuos
   label:
     en_US: Markdown to DOCX Converter
     zh_Hans: Markdown转DOCX转换器

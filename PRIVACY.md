@@ -47,4 +47,4 @@ This privacy policy may be updated to reflect changes in the plugin's functional
 
 ## Contact
 
-If you have any questions about this privacy policy or the Markdown to DOCX Converter plugin, please open an issue on our GitHub repository: [https://github.com/stvlynn/DOC-Dify-Plugin](https://github.com/stvlynn/DOC-Dify-Plugin)
+If you have any questions about this privacy policy or the Markdown to DOCX Converter plugin, please open an issue on our GitHub repository: [https://github.com/yuos/DOC-Dify-Plugin](https://github.com/yuos/DOC-Dify-Plugin)
