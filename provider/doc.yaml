@@ -1,11 +1,11 @@
 identity:
   author: yuos
-  name: doc
+  name: docx
   label:
-    en_US: DOC
-    zh_Hans: DOC
-    ja_JP: DOC
-    pt_BR: DOC
+    en_US: DOCX
+    zh_Hans: DOCX
+    ja_JP: DOCX
+    pt_BR: DOCX
   description:
     en_US: Convert Markdown text to Microsoft Word DOCX files
     zh_Hans: 将Markdown文本转换为Microsoft Word DOCX文件

@@ -1,12 +1,12 @@
 version: 0.0.4
 type: plugin
 author: yuos
-name: doc
+name: docx
 label:
-  en_US: DOC
-  ja_JP: DOC
-  zh_Hans: DOC
-  pt_BR: DOC
+  en_US: DOCX
+  ja_JP: DOCX
+  zh_Hans: DOCX
+  pt_BR: DOCX
 description:
   en_US: Convert Markdown text to Microsoft Word DOCX documents
   zh_Hans: 将Markdown文本转换为Microsoft Word DOCX文档
