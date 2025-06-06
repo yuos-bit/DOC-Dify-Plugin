@@ -10,14 +10,13 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from typing import Any, List, Dict, Tuple
 import html
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString, Tag
 
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
 class DocTool(Tool):
     def _invoke(self, tool_parameters: dict[str, Any]) -> Generator[ToolInvokeMessage]:
-        # Get markdown content from parameters
         md_content = tool_parameters.get("markdown_content", "")
         title = tool_parameters.get("title", "Document")
         
@@ -26,26 +25,19 @@ class DocTool(Tool):
             return
         
         try:
-            # Create a new Word document
-            doc = self._convert_markdown_to_docx(md_content, title)
+            # 只去除“↓”，保留“•”
+            md_content = md_content.replace("↓", "")
             
-            # Save document to a bytes buffer
+            doc = self._convert_markdown_to_docx(md_content, title)
             docx_bytes = io.BytesIO()
             doc.save(docx_bytes)
             docx_bytes.seek(0)
-            
-            # Get the byte data
             file_bytes = docx_bytes.getvalue()
-            
-            # Create a filename
             filename = f"{title.replace(' ', '_')}.docx"
             
-            # Return success message
             yield self.create_text_message(f"Document '{title}' generated successfully")
-            
-            # Return the document data as a blob
             yield self.create_blob_message(
-                blob=file_bytes, 
+                blob=file_bytes,
                 meta={
                     "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     "filename": filename
@@ -53,127 +45,137 @@ class DocTool(Tool):
             )
         except Exception as e:
             yield self.create_text_message(f"Error converting markdown to DOCX: {str(e)}")
-    
+
     def _convert_markdown_to_docx(self, md_content: str, title: str) -> Document:
-        # Create new document
         doc = Document()
         
-        # Add title with required font and size (方正小标宋_GBK, 二号 = 22pt)
+        # --- 标题部分 ---
         title_paragraph = doc.add_paragraph()
         title_run = title_paragraph.add_run(title)
         title_run.bold = True
         title_run.italic = False
         title_run.font.name = '方正小标宋_GBK'
-        # Set East Asian font
         title_run._element.rPr.rFonts.set(qn('w:eastAsia'), '方正小标宋_GBK')
         title_run.font.size = Pt(22)
-        # Set title color to black
         title_run.font.color.rgb = RGBColor(0, 0, 0)
         title_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
         
-        # Convert markdown to HTML with extensions
+        # 转换 Markdown 为 HTML（移除 nl2br 扩展）
         html_content = markdown.markdown(
-            md_content, 
+            md_content,
             extensions=[
                 'markdown.extensions.tables',
                 'markdown.extensions.fenced_code',
                 'markdown.extensions.codehilite',
-                'markdown.extensions.nl2br',
+                # 'markdown.extensions.nl2br',
                 'markdown.extensions.sane_lists'
             ]
         )
         
-        # Parse HTML
         soup = BeautifulSoup(html_content, 'html.parser')
-        
-        # Process HTML elements
         self._process_html_elements(doc, soup)
-        
         return doc
-    
-    def _process_html_elements(self, doc, soup):
-        # Process all elements
+
+    def _process_html_elements(self, doc: Document, soup: BeautifulSoup) -> None:
+        """
+        递归遍历所有 HTML 节点，根据标签名称将内容插入到 Word 文档中。
+        只去除“↓”，保留“•”。
+        """
         for element in soup.children:
-            if element.name is None:
+            # 跳过 <br> 标签
+            if isinstance(element, Tag) and element.name == 'br':
                 continue
-                
-            elif element.name == 'h1':
-                heading = doc.add_heading(element.get_text(), level=1)
-                # Apply Level 1 heading style: 黑体, 三号 = 16pt, black color, no italic
+            
+            # 纯文本节点：只去“↓”
+            if isinstance(element, NavigableString):
+                text = str(element).replace("↓", "").strip()
+                if text:
+                    p = doc.add_paragraph()
+                    run = p.add_run(text)
+                    run.font.name = '仿宋GB_2312'
+                    run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
+                    run.font.size = Pt(16)
+                    run.font.color.rgb = RGBColor(0, 0, 0)
+                continue
+            
+            if not isinstance(element, Tag):
+                continue
+            
+            # 处理标题 h1 ~ h6，只去除“↓”
+            if element.name == 'h1':
+                heading = doc.add_heading(element.get_text().replace("↓", "").strip(), level=1)
                 for run in heading.runs:
                     run.font.name = '黑体'
                     run._element.rPr.rFonts.set(qn('w:eastAsia'), '黑体')
                     run.font.size = Pt(16)
                     run.font.color.rgb = RGBColor(0, 0, 0)
                     run.italic = False
-            
+
             elif element.name == 'h2':
-                heading = doc.add_heading(element.get_text(), level=2)
-                # Level 2 heading: 楷体, 16pt, black color, no italic
+                heading = doc.add_heading(element.get_text().replace("↓", "").strip(), level=2)
                 for run in heading.runs:
                     run.font.name = '楷体'
                     run._element.rPr.rFonts.set(qn('w:eastAsia'), '楷体')
                     run.font.size = Pt(16)
                     run.font.color.rgb = RGBColor(0, 0, 0)
                     run.italic = False
-            
+
             elif element.name == 'h3':
-                heading = doc.add_heading(element.get_text(), level=3)
-                # Level 3 heading: 仿宋GB_2312, 16pt, black color, no italic
+                heading = doc.add_heading(element.get_text().replace("↓", "").strip(), level=3)
                 for run in heading.runs:
                     run.font.name = '仿宋GB_2312'
                     run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
                     run.font.size = Pt(16)
                     run.font.color.rgb = RGBColor(0, 0, 0)
                     run.italic = False
-            
+
             elif element.name == 'h4':
-                heading = doc.add_heading(element.get_text(), level=4)
-                # Level 4 heading: 仿宋GB_2312, 16pt, black color, no italic
+                heading = doc.add_heading(element.get_text().replace("↓", "").strip(), level=4)
                 for run in heading.runs:
                     run.font.name = '仿宋GB_2312'
                     run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
                     run.font.size = Pt(16)
                     run.font.color.rgb = RGBColor(0, 0, 0)
                     run.italic = False
-            
+
             elif element.name == 'h5':
-                heading = doc.add_heading(element.get_text(), level=5)
+                heading = doc.add_heading(element.get_text().replace("↓", "").strip(), level=5)
                 for run in heading.runs:
                     run.font.color.rgb = RGBColor(0, 0, 0)
                     run.italic = False
-            
+
             elif element.name == 'h6':
-                heading = doc.add_heading(element.get_text(), level=6)
+                heading = doc.add_heading(element.get_text().replace("↓", "").strip(), level=6)
                 for run in heading.runs:
                     run.font.color.rgb = RGBColor(0, 0, 0)
                     run.italic = False
-            
+
+            # 段落 <p>：只去“↓”
             elif element.name == 'p':
-                text = element.get_text().strip()
-                # Check for attachment section
+                text = element.get_text().replace("↓", "").strip()
+                if not text:
+                    continue
+
                 if text.startswith('附件'):
-                    # Add a blank line before attachments
                     doc.add_paragraph()
                     p = doc.add_paragraph()
-                    # First line indent of 2 characters (~24pt)
                     p.paragraph_format.first_line_indent = Pt(24)
                     self._add_run_with_formatting(p, element)
                 else:
                     p = doc.add_paragraph()
-                    # First line indent of 2 characters (~24pt) for all body paragraphs
                     p.paragraph_format.first_line_indent = Pt(24)
                     self._add_run_with_formatting(p, element)
-            
+
+            # 列表 <ul> / <ol>：只去“↓”，保留“•”
             elif element.name == 'ul':
                 self._add_list(doc, element, is_numbered=False)
-            
+
             elif element.name == 'ol':
                 self._add_list(doc, element, is_numbered=True)
-            
+
+            # 代码块 <pre>：只去“↓”
             elif element.name == 'pre':
-                # Code block
-                code = element.get_text()
+                code = element.get_text().replace("↓", "")
                 lang = ""
                 if element.code and element.code.get('class'):
                     for cls in element.code.get('class'):
@@ -181,70 +183,89 @@ class DocTool(Tool):
                             lang = cls[9:]
                             break
                 self._add_code_block(doc, code, lang)
-            
+
+            # 表格 <table>：只去“↓”
             elif element.name == 'table':
                 self._add_html_table(doc, element)
-            
+
+            # 分隔线 <hr>
             elif element.name == 'hr':
                 doc.add_paragraph('_' * 50)
-            
-            elif hasattr(element, 'children'):
-                # Recursively process child elements
+
+            # 其他容器标签（例如 <div>、<span> 等），递归处理其子元素
+            else:
                 self._process_html_elements(doc, element)
-    
+
     def _add_run_with_formatting(self, paragraph, element):
-        # Process the content of a paragraph with formatting
+        """
+        在一个段落里插入富文本内容，并保持“只去除↓”的原则。
+        """
         for child in element.children:
-            if child.name is None:  # Text node
-                run = paragraph.add_run(child.string)
-            elif child.name == 'strong' or child.name == 'b':
-                run = paragraph.add_run(child.get_text())
+            if isinstance(child, NavigableString):
+                text = str(child).replace("↓", "")
+                run = paragraph.add_run(text)
+
+            elif isinstance(child, Tag) and child.name in ['strong', 'b']:
+                text = child.get_text().replace("↓", "")
+                run = paragraph.add_run(text)
                 run.bold = True
-            elif child.name == 'em' or child.name == 'i':
-                run = paragraph.add_run(child.get_text())
+
+            elif isinstance(child, Tag) and child.name in ['em', 'i']:
+                text = child.get_text().replace("↓", "")
+                run = paragraph.add_run(text)
                 run.italic = True
-            elif child.name == 'code':
-                run = paragraph.add_run(child.get_text())
+
+            elif isinstance(child, Tag) and child.name == 'code':
+                code_text = child.get_text().replace("↓", "")
+                run = paragraph.add_run(code_text)
                 run.font.name = 'Courier New'
-            elif child.string:
-                run = paragraph.add_run(child.string)
-            elif hasattr(child, 'children'):
-                # Recursively process nested elements
-                for nested_child in child.children:
-                    if nested_child.name is None:  # Text node
-                        run = paragraph.add_run(nested_child.string)
-                    elif nested_child.name == 'strong' or nested_child.name == 'b':
-                        run = paragraph.add_run(nested_child.get_text())
-                        run.bold = True
-                    elif nested_child.name == 'em' or nested_child.name == 'i':
-                        run = paragraph.add_run(nested_child.get_text())
-                        run.italic = True
-            # Apply body text font for each run: 仿宋GB_2312, 三号 = 16pt, black color
+
+            elif isinstance(child, Tag):
+                # 递归处理其他标签（<span>、<a>、<div> 等）
+                self._add_run_with_formatting(paragraph, child)
+            
+            # 统一为正文文字格式：仿宋GB_2312，16pt，黑色
+            try:
+                run.font.name = '仿宋GB_2312'
+                run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
+                run.font.size = Pt(16)
+                run.font.color.rgb = RGBColor(0, 0, 0)
+            except UnboundLocalError:
+                # 如果 run 未定义（极端情况），忽略即可
+                pass
+
+    def _add_list(self, doc: Document, list_element: Tag, is_numbered: bool = False):
+        """
+        处理 HTML 中的 <ul> 或 <ol> 列表，只去“↓”，保留项目符号。
+        """
+        for item in list_element.find_all('li', recursive=False):
+            # 提取 li 文本并只去“↓”
+            item_text = "".join(t for t in item.strings).replace("↓", "").strip()
+            if not item_text:
+                continue
+
+            # 根据是否有序，选择不同的样式
+            p = doc.add_paragraph(style='List Number' if is_numbered else 'List Bullet')
+            p.paragraph_format.first_line_indent = Pt(24)
+            run = p.add_run(item_text)
             run.font.name = '仿宋GB_2312'
             run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
             run.font.size = Pt(16)
             run.font.color.rgb = RGBColor(0, 0, 0)
-    
-    def _add_list(self, doc, list_element, is_numbered=False):
-        # Process a list (ul or ol)
-        for item in list_element.find_all('li', recursive=False):
-            p = doc.add_paragraph(style='List Number' if is_numbered else 'List Bullet')
-            # First line indent of 2 characters (~24pt) for list items
-            p.paragraph_format.first_line_indent = Pt(24)
-            self._add_run_with_formatting(p, item)
-            
-            # Process nested lists
+
+            # 递归处理嵌套的 <ul> / <ol>
             nested_ul = item.find('ul')
             nested_ol = item.find('ol')
-            
             if nested_ul:
                 self._add_list(doc, nested_ul, is_numbered=False)
             if nested_ol:
                 self._add_list(doc, nested_ol, is_numbered=True)
-    
-    def _add_code_block(self, doc, code, language=""):
+
+    def _add_code_block(self, doc: Document, code: str, language: str = ""):
+        """
+        将 <pre><code>…</code></pre> 转为 Word 中的代码块格式，只去“↓”。
+        """
         p = doc.add_paragraph()
-        # First line indent for code blocks
         p.paragraph_format.first_line_indent = Pt(24)
         if language:
             lang_run = p.add_run(f"Language: {language}\n")
@@ -253,46 +274,49 @@ class DocTool(Tool):
             lang_run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
             lang_run.font.size = Pt(16)
             lang_run.font.color.rgb = RGBColor(0, 0, 0)
-        
-        code_run = p.add_run(code)
+
+        code_filtered = code.replace("↓", "")
+        code_run = p.add_run(code_filtered)
         code_run.font.name = 'Courier New'
         code_run.font.size = Pt(9)
         code_run.font.color.rgb = RGBColor(0, 0, 0)
-        
-        # Add a light gray shading
+
         p.paragraph_format.left_indent = Inches(0.5)
         p.paragraph_format.right_indent = Inches(0.5)
-    
-    def _add_html_table(self, doc, table):
-        # Get rows
+
+    def _add_html_table(self, doc: Document, table: Tag):
+        """
+        将 HTML 中的 <table> 转为 Word 表格，只去“↓”。
+        """
         rows = table.find_all('tr')
         if not rows:
-            return            
-        # Count columns (from first row)
+            return
+
+        # 第一行决定列数
         header_cells = rows[0].find_all(['th', 'td'])
         col_count = len(header_cells)
-        
-        # Create table
         doc_table = doc.add_table(rows=len(rows), cols=col_count)
         doc_table.style = 'Table Grid'
-        
-        # Fill the table
+
         for i, row in enumerate(rows):
             cells = row.find_all(['th', 'td'])
             for j, cell in enumerate(cells):
-                if j < col_count:  # Ensure we don't go out of bounds
-                    cell_text = cell.get_text()
-                    doc_table.cell(i, j).text = cell_text
-                    # Apply formatting: body text font
+                if j >= col_count:
+                    continue
+                # 只去“↓”，保留其他符号
+                cell_text = cell.get_text().replace("↓", "")
+                doc_table.cell(i, j).text = cell_text
+
+                for para in doc_table.cell(i, j).paragraphs:
+                    for run in para.runs:
+                        run.font.name = '仿宋GB_2312'
+                        run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
+                        run.font.size = Pt(16)
+                        run.font.color.rgb = RGBColor(0, 0, 0)
+
+                # 如果是表头行（i == 0）或单元格标签是 <th>，则加粗
+                if i == 0 or cell.name == 'th':
                     for para in doc_table.cell(i, j).paragraphs:
                         for run in para.runs:
-                            run.font.name = '仿宋GB_2312'
-                            run._element.rPr.rFonts.set(qn('w:eastAsia'), '仿宋GB_2312')
-                            run.font.size = Pt(16)
+                            run.bold = True
                             run.font.color.rgb = RGBColor(0, 0, 0)
-                    # Apply bold formatting to header cells
-                    if i == 0 or cell.name == 'th':
-                        for para in doc_table.cell(i, j).paragraphs:
-                            for run in para.runs:
-                                run.bold = True
-                                run.font.color.rgb = RGBColor(0, 0, 0)
