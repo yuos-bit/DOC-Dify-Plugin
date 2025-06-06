@@ -8,9 +8,9 @@ label:
   zh_Hans: DOCX
   pt_BR: DOCX
 description:
-  en_US: Convert Markdown text to Microsoft Word DOCX documents
-  zh_Hans: 将Markdown文本转换为Microsoft Word DOCX文档
-  ja_JP: Markdown テキストを Microsoft Word DOCX ドキュメントに変換します
+  en_US: Convert Markdown text to Standard official documents DOCX documents
+  zh_Hans: 将Markdown文本转换为标准公文DOCX文档
+  ja_JP: Markdown テキストを Standard official documents DOCX ドキュメントに変換します
   pt_BR: Converta texto Markdown para documentos DOCX do Microsoft Word
 icon: icon.svg
 resource:
