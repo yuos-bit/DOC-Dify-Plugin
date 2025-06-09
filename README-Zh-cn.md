@@ -1,10 +1,11 @@
 ## ✅ 第三方插件签名验证完整流程（自托管 Dify 社区版）
 
-### 📌 场景前提：
+### 📌 场景前提
 
 * 你是 **Dify 的管理员**
 * 你使用的是 **自托管版（Docker Compose 部署）**
 * 你希望为某个插件进行签名验证后再安装（或允许其他人安装你签名的插件）
+* 已安装 <https://github.com/langgenius/dify-plugin-daemon>
 
 ---
 
