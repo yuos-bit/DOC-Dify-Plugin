@@ -5,7 +5,7 @@
 * 你是 **Dify 的管理员**
 * 你使用的是 **自托管版（Docker Compose 部署）**
 * 你希望为某个插件进行签名验证后再安装（或允许其他人安装你签名的插件）
-* 已安装 <https://github.com/langgenius/dify-plugin-daemon> 可使用[安装脚本](https://github.com/langgenius/dify-plugin-daemon/blob/main/.script/install.sh) 一键安装
+* 已安装 <https://github.com/langgenius/dify-plugin-daemon> 可使用[安装脚本]([https://github.com/langgenius/dify-plugin-daemon/blob/main/.script/install.sh](https://raw.githubusercontent.com/langgenius/dify-plugin-daemon/refs/heads/main/.script/install.sh)) 一键安装
 
 ---
 
