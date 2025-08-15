@@ -35,7 +35,19 @@ echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/$USER/.ba
 # 第二步：立即生效环境变量（无需重启终端）
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 sudo apt-get install build-essential
-# 安装 Homebrew 依赖
+
+# 第三步 向当前用户的.bashrc中添加路径配置
+echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >> ~/.bashrc
+echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >> ~/.bashrc
+echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >> ~/.bashrc
+
+# 第四步 立即生效配置
+source ~/.bashrc
+
+# 第五步 验证是否生效
+brew --version  # 若输出版本信息，则配置成功
+
+# 第六步 安装 Homebrew 依赖
 brew tap langgenius/dify
 brew install dify
 ```
