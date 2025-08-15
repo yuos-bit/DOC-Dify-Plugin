@@ -1,9 +1,11 @@
 ## ✅ 第三方插件签名验证完整流程（自托管 Dify 社区版）
 
 * 测试环境：乌班图18.04
+
 ```shell
 sudo vi /etc/apt/sources.list
 ```
+
 ```shell
 deb http://mirrors.ustc.edu.cn/ubuntu/ bionic main restricted universe multiverse
 deb http://mirrors.ustc.edu.cn/ubuntu/ bionic-security main restricted universe multiverse
@@ -16,17 +18,19 @@ deb-src http://mirrors.ustc.edu.cn/ubuntu/ bionic-updates main restricted univer
 deb-src http://mirrors.ustc.edu.cn/ubuntu/ bionic-proposed main restricted universe multiverse
 deb-src http://mirrors.ustc.edu.cn/ubuntu/ bionic-backports main restricted universe multiverse
 ```
+
 ```shell
 sudo apt update
 sudo apt upgrade
 ```
+
 ## 📌 场景前提
 
 * 你是 **Dify 的管理员**
 * 你使用的是 **自托管版（Docker Compose 部署）**
 * 你希望为某个插件进行签名验证后再安装（或允许其他人安装你签名的插件）
 * 已安装 <https://github.com/langgenius/dify-plugin-daemon> 可使用[安装脚本](https://raw.githubusercontent.com/langgenius/dify-plugin-daemon/refs/heads/main/.script/install.sh) 一键安装
-    - 也可以 `sudo apt install linuxbrew-wrapper`或者其官方安装脚本[安装脚本](https://github.com/Homebrew/install/blob/main/install.sh) 然后
+  * 也可以 `sudo apt install linuxbrew-wrapper`或者其官方安装脚本[安装脚本](https://github.com/Homebrew/install/blob/main/install.sh) 然后
 
 ```shell
 # 第一步：将Homebrew的环境变量添加到.bashrc
@@ -169,4 +173,3 @@ dify signature verify ../doc_plugin.signed.difypkg -p ~/dify_plugin_keys/my_key.
 | 不建议频繁更换密钥  | 保持发布方签名可信一致性                         |
 
 ---
-
