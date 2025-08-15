@@ -7,18 +7,18 @@
 * 你希望为某个插件进行签名验证后再安装（或允许其他人安装你签名的插件）
 * 已安装 <https://github.com/langgenius/dify-plugin-daemon> 可使用[安装脚本](https://raw.githubusercontent.com/langgenius/dify-plugin-daemon/refs/heads/main/.script/install.sh) 一键安装
     - 也可以 `sudo apt install linuxbrew-wrapper`或者其官方安装脚本[安装脚本](https://github.com/Homebrew/install/blob/main/install.sh) 然后
-      ```shell
-      # 第一步：将Homebrew的环境变量添加到.bashrc
-      echo >> /home/tlyt/.bashrc
-      echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/tlyt/.bashrc
 
-      # 第二步：立即生效环境变量（无需重启终端）
-      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-      sudo apt-get install build-essential
-      # 安装 Homebrew 依赖
-      brew tap langgenius/dify
-      brew install dify
-      ```
+```shell
+# 第一步：将Homebrew的环境变量添加到.bashrc
+echo >> /home/$USER/.bashrc
+echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/$USER/.bashrc
+# 第二步：立即生效环境变量（无需重启终端）
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+sudo apt-get install build-essential
+# 安装 Homebrew 依赖
+brew tap langgenius/dify
+brew install dify
+```
 
 ---
 
@@ -137,3 +137,4 @@ dify signature verify ../doc_plugin.signed.difypkg -p ~/dify_plugin_keys/my_key.
 | 不建议频繁更换密钥  | 保持发布方签名可信一致性                         |
 
 ---
+
