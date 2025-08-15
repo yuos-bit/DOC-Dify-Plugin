@@ -1,6 +1,26 @@
 ## ✅ 第三方插件签名验证完整流程（自托管 Dify 社区版）
 
-### 📌 场景前提
+* 测试环境：乌班图18.04
+```shell
+sudo vi /etc/apt/sources.list
+```
+```shell
+deb http://mirrors.ustc.edu.cn/ubuntu/ bionic main restricted universe multiverse
+deb http://mirrors.ustc.edu.cn/ubuntu/ bionic-security main restricted universe multiverse
+deb http://mirrors.ustc.edu.cn/ubuntu/ bionic-updates main restricted universe multiverse
+deb http://mirrors.ustc.edu.cn/ubuntu/ bionic-proposed main restricted universe multiverse
+deb http://mirrors.ustc.edu.cn/ubuntu/ bionic-backports main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ bionic main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ bionic-security main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ bionic-updates main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ bionic-proposed main restricted universe multiverse
+deb-src http://mirrors.ustc.edu.cn/ubuntu/ bionic-backports main restricted universe multiverse
+```
+```shell
+sudo apt update
+sudo apt upgrade
+```
+## 📌 场景前提
 
 * 你是 **Dify 的管理员**
 * 你使用的是 **自托管版（Docker Compose 部署）**
